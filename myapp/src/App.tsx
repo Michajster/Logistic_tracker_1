@@ -4,6 +4,7 @@ import ScanInput from "./components/ScanInput";
 import Header from "./components/Header";
 import { useLayoutLive } from "./hooks/useLayoutLive";
 import QrHeader from "./components/QrHeader";
+import A1ListAndTimes from "./components/A1ListAndTimes";
 
 export default function App() {
   useLayoutLive();
@@ -13,6 +14,9 @@ export default function App() {
       <Header />
 
       <QrHeader />
+
+      <A1ListAndTimes />
+
 
             <div style={{ padding: 20 }}>
         <ScanInput />

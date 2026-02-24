@@ -3,63 +3,77 @@ import React, { useState } from "react";
 import { sendScanEvent } from "../services/api";
 import { saveOffline } from "../services/offlineQueue";
 import { useScanStore } from "../store/scanStore";
+import { useDeliveryStore } from "../store/deliveryStore"; // tabela dla A1
+import { useDeliveryStore as useA1 } from "../store/deliveryStore";
 
-/**
- * ScanInput
- * - przy Enter wysyła „skan” na backend (REST)
- * - rozpoznaje QR w formacie JSON: {"ts": <number>, "sid": "<uuid>"}
- * - zapisuje ostatni timestamp z QR do store (lastQrTs)
- * - mierzy czas od ostatniego QR do bieżącego skanu i loguje wynik
- * - buforuje offline przy błędzie
- */
 export default function ScanInput() {
   const [value, setValue] = useState("");
-  const mode = useScanStore((s) => s.mode);
+
   const lastQrTs = useScanStore((s) => s.lastQrTs);
   const setLastQrTs = useScanStore((s) => s.setLastQrTs);
+
+  const isA1Part = useA1((s) => s.isA1Part);
+  const addDelivery = useA1((s) => s.addDelivery);
 
   const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== "Enter") return;
 
     const raw = value.trim();
-    console.log("[ScanInput] ENTER pressed, value:", raw);
+    console.log("[SCAN] ENTER:", raw);
 
     if (!raw) return;
 
-    // 1) Wykryj QR (JSON) i zapisz timestamp sesji
+    // -----------------------------------------------------------
+    // 1) MAGAZYN → QR: JSON {"ts":..., "sid":...}
+    // -----------------------------------------------------------
     if (raw.startsWith("{") && raw.endsWith("}")) {
       try {
-        const qr = JSON.parse(raw);
-        if (typeof qr.ts === "number") {
-          setLastQrTs(qr.ts);
-          console.log(
-            `[QR] zapisano lastQrTs=${qr.ts} (sid=${qr.sid ?? "—"})`
-          );
+        const parsed = JSON.parse(raw);
+        if (typeof parsed.ts === "number") {
+          setLastQrTs(parsed.ts);
+          console.log("[QR] zapisano timestamp startu =", parsed.ts);
           setValue("");
-          return; // sam QR nie wysyłamy jako „scan-event”
+          return; // QR nie jest eventem części
         }
       } catch (err) {
-        console.warn("[QR] Nieprawidłowy JSON w QR:", err);
-        // kontynuujemy jak zwykły skan
+        console.warn("Błędny format QR JSON", err);
       }
     }
 
-    // 2) Jeśli mamy lastQrTs, policz czas od QR do skanu
-    let travelMs: number | undefined;
-    if (lastQrTs && Number.isFinite(lastQrTs)) {
-      travelMs = Date.now() - lastQrTs;
-      const sec = Math.round(travelMs / 1000);
-      console.log(`[METRICS] czas od QR: ${sec}s (${travelMs} ms)`);
+    // -----------------------------------------------------------
+    // 2) LINIA → skanujemy komponent
+    // -----------------------------------------------------------
+    const now = Date.now();
+
+    let travelMs: number | null = null;
+
+    if (typeof lastQrTs === "number") {
+      travelMs = now - lastQrTs;
+      console.log("[METRYKA] czas przejazdu =", travelMs, "ms");
+    } else {
+      console.warn("[WARN] Brak QR start → nie można policzyć travelMs");
     }
 
-    // 3) Zbuduj event i wyślij
+    // jeśli komponent należy do linii A1 → dopisujemy do tabeli
+    if (isA1Part(raw) && typeof lastQrTs === "number") {
+      addDelivery({
+        partCode: raw,
+        startTs: lastQrTs,
+        endTs: now,
+        travelMs,
+      });
+      console.log("[A1] Dopisano pomiar komponentu:", raw);
+    }
+
+    // -----------------------------------------------------------
+    // 3) Wyślij event do backendu
+    // -----------------------------------------------------------
     const event = {
       code: raw,
-      mode,                         // "MAGAZYN" albo "LINIA"
-      ts: new Date().toISOString(), // timestamp skanu
-      source: "HID",                // skaner jako klawiatura
-      lastQrTs: lastQrTs ?? null,   // ostatni QR (start)
-      travelMs: travelMs ?? null    // różnica czasu (ms) jeśli dostępna
+      ts: new Date(now).toISOString(),
+      lastQrTs: lastQrTs ?? null,
+      travelMs,
+      isA1: isA1Part(raw),
     };
 
     try {
@@ -67,7 +81,6 @@ export default function ScanInput() {
       console.log("[REST] sent", event);
     } catch (err) {
       console.error("[REST] failed", err);
-      // bufor offline – wyśle się automatycznie później
       await saveOffline(event);
     } finally {
       setValue("");
@@ -80,7 +93,7 @@ export default function ScanInput() {
       value={value}
       onChange={(e) => setValue(e.target.value)}
       onKeyDown={handleKeyDown}
-      placeholder="Zeskanuj kod lub QR..."
+      placeholder="Zeskanuj QR (magazyn) lub komponent (linia)…"
       style={{ fontSize: 28, padding: 12, width: "100%" }}
     />
   );
