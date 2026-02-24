@@ -7,12 +7,13 @@ export function useLayoutLive() {
 
   useEffect(() => {
     const protocol = location.protocol === "https:" ? "wss://" : "ws://";
-    const ws = new WebSocket(protocol + location.host + "/live");
+    const wsUrl = protocol + location.host + "/live";
+
+    const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => console.log("[WS] connected");
     ws.onerror = (e) => console.error("[WS] error", e);
     ws.onclose = () => console.warn("[WS] closed");
-
     ws.onmessage = (msg) => {
       console.log("[WS] message", msg.data);
       try {
@@ -20,8 +21,8 @@ export function useLayoutLive() {
         if (data.type === "inventory_update") {
           updateStation(data.id, data.level);
         }
-      } catch (err) {
-        console.error("WS JSON parse failed", err);
+      } catch (e) {
+        console.error("WS parse error", e);
       }
     };
 

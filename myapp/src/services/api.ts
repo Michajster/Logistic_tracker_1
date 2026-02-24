@@ -1,6 +1,6 @@
 
 export async function sendScanEvent(ev: any) {
-  const res = await fetch(`/api/scan-events`, {
+  const res = await fetch("/api/scan-events", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(ev),
