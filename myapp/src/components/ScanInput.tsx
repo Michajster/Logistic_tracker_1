@@ -42,6 +42,13 @@ export default function ScanInput() {
         if (parsed.type === "MAGAZYN") {
           console.log("[QR#1] MAGAZYN scanned:", parsed);
           setMagazynScan(parsed.ts);
+          // odśwież wyświetlane QR magazynu i globalny header
+          try {
+            regenerateMagazyn?.();
+            regenerateGlobalQr?.();
+          } catch (err) {
+            console.warn('[QR] regenerate after MAGAZYN scan failed', err);
+          }
           setValue("");
           return;
         }
@@ -49,6 +56,13 @@ export default function ScanInput() {
         if (parsed.type === "WOZEK") {
           console.log("[QR#2] WOZEK scanned:", parsed);
           setWozekScan(Date.now());
+          // odśwież wyświetlane QR wózka i globalny header
+          try {
+            regenerateWozek?.();
+            regenerateGlobalQr?.();
+          } catch (err) {
+            console.warn('[QR] regenerate after WOZEK scan failed', err);
+          }
           setValue("");
           return;
         }
