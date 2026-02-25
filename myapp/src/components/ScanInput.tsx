@@ -76,6 +76,12 @@ export default function ScanInput() {
         }
 
         if (parsed.type === "WOZEK") {
+          // Zablokuj skan wózka jeśli nie ma oczekującego magazynu
+          if (!hasPendingMagazyn) {
+            console.warn('[BLOCK] Skan wózka blokowany — nie ma oczekującego magazynu');
+            return;
+          }
+
           console.log("[QR#2] WOZEK scanned:", parsed);
           const nowTs = Date.now();
           
