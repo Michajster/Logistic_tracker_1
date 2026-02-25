@@ -25,7 +25,7 @@ export default function QrMagazynPage() {
     <div style={{ padding: 20, textAlign: "center" }}>
       <h2>QR #1 — Magazyn (wydanie części)</h2>
 
-      <QRCodeSVG value={payload} size={200} />
+      <QRCodeSVG key={`${current.sessionId}-${current.tsMagazyn}`} value={payload} size={200} />
 
       <div style={{ marginTop: 15 }}>
         <p><b>sessionId:</b> {current.sessionId}</p>

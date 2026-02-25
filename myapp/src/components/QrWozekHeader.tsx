@@ -18,7 +18,7 @@ export default function QrWozekHeader() {
   const payload = JSON.stringify({
     sessionId: current.sessionId,
     ts: current.tsMagazyn, // magazyn timestamp stays constant!
-    tsWozek: Date.now(),
+    tsWozek: current.tsWozek ?? Date.now(),
     type: "WOZEK",
   });
 
@@ -26,7 +26,7 @@ export default function QrWozekHeader() {
     <div style={{ padding: 20, textAlign: "center" }}>
       <h2>QR #2 — Wózek przed wyjazdem</h2>
 
-      <QRCodeSVG value={payload} size={200} />
+      <QRCodeSVG key={`${current.sessionId}-${current.tsWozek ?? 0}`} value={payload} size={200} />
 
       <div style={{ marginTop: 15 }}>
         <p><b>sessionId:</b> {current.sessionId}</p>
