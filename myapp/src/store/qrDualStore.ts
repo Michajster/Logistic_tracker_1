@@ -2,8 +2,8 @@ import { create } from "zustand";
 
 export type DualQrPayload = {
   sessionId: string;
-  tsMagazyn: number;  // timestamp QR #1
-  tsWozek: number | null; // timestamp QR #2 (gdy zeskanowany)
+  tsMagazyn: number; // timestamp used for displayed MAGAZYN QR
+  tsWozek: number | null; // timestamp used for displayed WOZEK QR
 };
 
 const makeSession = (): DualQrPayload => ({
@@ -14,14 +14,19 @@ const makeSession = (): DualQrPayload => ({
 
 type DualQrState = {
   current: DualQrPayload;
+  // last scanned values (used for timing calculations)
+  lastMagazynScan: number | null;
+  lastWozekScan: number | null;
   regenerateMagazyn: () => void;
   regenerateWozek: () => void;
-  setMagazynScan: (ts: number) => void;
-  setWozekScan: (ts: number) => void;
+  setMagazynScan: (ts: number) => void; // record scanned ts and rotate displayed QR
+  setWozekScan: (ts: number) => void; // record scanned ts and rotate displayed WOZEK QR
 };
 
 export const useDualQrStore = create<DualQrState>((set, _get) => ({
   current: makeSession(),
+  lastMagazynScan: null,
+  lastWozekScan: null,
 
   regenerateMagazyn: () =>
     set({
@@ -39,15 +44,17 @@ export const useDualQrStore = create<DualQrState>((set, _get) => ({
     })),
 
   setMagazynScan: (ts: number) =>
-    set((state) => ({
+    set(() => ({
+      // keep scanned ts for calculations, but rotate displayed QR for next use
+      lastMagazynScan: ts,
       current: {
-        ...state.current,
-        tsMagazyn: ts,
+        ...makeSession(),
       },
     })),
 
   setWozekScan: (ts: number) =>
     set((state) => ({
+      lastWozekScan: ts,
       current: {
         ...state.current,
         tsWozek: ts,

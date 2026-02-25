@@ -35,6 +35,7 @@ export default function Header() {
       </NavLink>
       
       <NavLink to="/qr/magazyn">QR Magazyn</NavLink>
+  <NavLink to="/qr/times">Czasy QR</NavLink>
       <NavLink to="/qr/wozek">QR Wózek</NavLink>
 
     </div>

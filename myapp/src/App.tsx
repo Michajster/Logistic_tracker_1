@@ -6,6 +6,7 @@ import HomePage from "./pages/HomePage";
 import LineDetailsPage from "./pages/LineDetailsPage";
 import { useLayoutLive } from "./hooks/useLayoutLive";
 import QrMagazynPage from "./pages/QrMagazynPage";
+import QrTimesPage from "./pages/QrTimesPage";
 
 
 export default function App() {
@@ -17,6 +18,7 @@ export default function App() {
       <Routes>
         
         <Route path="/qr/magazyn" element={<QrMagazynPage />} />
+  <Route path="/qr/times" element={<QrTimesPage />} />
    
         <Route path="/" element={<HomePage />} />
         <Route path="/line/:lineId" element={<LineDetailsPage />} />

@@ -10,8 +10,10 @@ export default function ScanInput() {
   const [value, setValue] = useState("");
 
   // DUAL QR STATE (sessionId + oba starty)
-  const { current, setMagazynScan, setWozekScan } = useDualQrStore();
-  const { sessionId, tsMagazyn, tsWozek } = current;
+  const { current, lastMagazynScan, lastWozekScan, setMagazynScan, setWozekScan } = useDualQrStore();
+  const { sessionId } = current;
+  const tsMagazyn = lastMagazynScan;
+  const tsWozek = lastWozekScan;
 
   // A1 — lista części
   const isA1Part     = useDeliveryStore((s) => s.isA1Part);
@@ -92,7 +94,7 @@ export default function ScanInput() {
       // HISTORIA
       addDelivery({
         partCode: raw,
-        startTs: tsMagazyn,
+        startTs: tsMagazyn ?? now,
         endTs: now,
         travelMs: magToLine ?? 0,
       });
