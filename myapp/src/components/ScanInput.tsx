@@ -1,23 +1,33 @@
-
 import React, { useState } from "react";
 import { sendScanEvent } from "../services/api";
 import { saveOffline } from "../services/offlineQueue";
+
+// QR timestamp store (start)
 import { useScanStore } from "../store/scanStore";
-import { useDeliveryStore } from "../store/deliveryStore"; // tabela dla A1
+
+// Historia pomiarów A1
 import { useDeliveryStore as useA1 } from "../store/deliveryStore";
+
+// Aktualny stan komponentów na A1
 import { useCurrentA1Store } from "../store/currentA1Store";
 
 export default function ScanInput() {
   const [value, setValue] = useState("");
 
+  // AKTUALNY STAN A1 (itemy na linii)
   const addCurrentA1 = useCurrentA1Store((s) => s.addOrUpdateItem);
 
+  // QR timestamp (start)
   const lastQrTs = useScanStore((s) => s.lastQrTs);
   const setLastQrTs = useScanStore((s) => s.setLastQrTs);
 
+  // DETEKCJA KOMPONENTÓW A1 + historia transportów
   const isA1Part = useA1((s) => s.isA1Part);
   const addDelivery = useA1((s) => s.addDelivery);
 
+  // --------------------------------------------
+  // HANDLER ENTER / SKAN
+  // --------------------------------------------
   const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== "Enter") return;
 
@@ -26,60 +36,60 @@ export default function ScanInput() {
 
     if (!raw) return;
 
-    // -----------------------------------------------------------
-    // 1) MAGAZYN → QR: JSON {"ts":..., "sid":...}
-    // -----------------------------------------------------------
+    // --------------------------------------------
+    // 1) QR Z MAGAZYNU (JSON z "ts")
+    // --------------------------------------------
     if (raw.startsWith("{") && raw.endsWith("}")) {
       try {
         const parsed = JSON.parse(raw);
+
         if (typeof parsed.ts === "number") {
           setLastQrTs(parsed.ts);
           console.log("[QR] zapisano timestamp startu =", parsed.ts);
           setValue("");
-          return; // QR nie jest eventem części
+          return; // QR nie generuje skanu komponentu
         }
       } catch (err) {
-        console.warn("Błędny format QR JSON", err);
+        console.warn("[QR] Błędny JSON:", err);
       }
     }
 
-    // -----------------------------------------------------------
-    // 2) LINIA → skanujemy komponent
-    // -----------------------------------------------------------
+    // --------------------------------------------
+    // 2) SKAN KOMPONENTU NA LINII
+    // --------------------------------------------
     const now = Date.now();
-
     let travelMs: number | null = null;
 
     if (typeof lastQrTs === "number") {
       travelMs = now - lastQrTs;
       console.log("[METRYKA] czas przejazdu =", travelMs, "ms");
     } else {
-      console.warn("[WARN] Brak QR start → nie można policzyć travelMs");
+      console.warn("[WARN] Nie zeskanowano QR → brak lastQrTs");
     }
 
-    // jeśli komponent należy do linii A1 → dopisujemy do tabeli
+    // Jeżeli komponent należy do A1 → zapisujemy historię + stan bieżący
     if (isA1Part(raw) && typeof lastQrTs === "number") {
-  // 1) wpis do historii pomiarów A1
-  addDelivery({
-    partCode: raw,
-    startTs: lastQrTs,
-    endTs: now,
-    travelMs,
-  });
+      // Historia pomiarów A1
+      addDelivery({
+        partCode: raw,
+        startTs: lastQrTs,
+        endTs: now,
+        travelMs,
+      });
 
-  // 2) wpis do AKTUALNEGO stanu A1
-  addCurrentA1({
-    partCode: raw,
-    arrivalTs: now,
-    travelMs,
-  });
+      // Stan aktualny na A1
+      addCurrentA1({
+        partCode: raw,
+        arrivalTs: now,
+        travelMs,
+      });
 
-  console.log(`[A1] Zaktualizowano stan bieżący + pomiar: ${raw}`);
-}
+      console.log(`[A1] Dopisano rekord: ${raw} (travelMs=${travelMs}ms)`);
+    }
 
-    // -----------------------------------------------------------
-    // 3) Wyślij event do backendu
-    // -----------------------------------------------------------
+    // --------------------------------------------
+    // 3) WYSYŁKA DO BACKENDU
+    // --------------------------------------------
     const event = {
       code: raw,
       ts: new Date(now).toISOString(),
@@ -99,6 +109,9 @@ export default function ScanInput() {
     }
   };
 
+  // --------------------------------------------
+  // RENDER
+  // --------------------------------------------
   return (
     <input
       autoFocus
