@@ -1,27 +1,26 @@
-import React from "react";
-import FactoryMap from "./components/FactoryMap";
-import ScanInput from "./components/ScanInput";
-import Header from "./components/Header";
-import { useLayoutLive } from "./hooks/useLayoutLive";
-import QrHeader from "./components/QrHeader";
-import A1ListAndTimes from "./components/A1ListAndTimes";
-import A1CurrentList from "./components/A1CurrentList";
 
+// src/App.tsx
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Header from "./components/Header";
+import HomePage from "./pages/HomePage";
+import LineDetailsPage from "./pages/LineDetailsPage";
+import { useLayoutLive } from "./hooks/useLayoutLive";
 
 export default function App() {
-  useLayoutLive();
+  useLayoutLive(); // live update mapy (zostaje)
+
   return (
-    <div style={{ display:"flex", flexDirection:"column", height:"100vh" }}>
+    <>
       <Header />
-      <QrHeader />
-      <A1CurrentList />     {/* stan bieżący A1 */}
-      <A1ListAndTimes />    {/* historia pomiarów */}
-      <div style={{ padding:20 }}>
-        <ScanInput />
-      </div>
-      <div style={{ flex:1, padding:20 }}>
-        <FactoryMap />
-      </div>
-    </div>
+      <Routes>
+        
+        <Route path="/qr/magazyn" element={<QrMagazynPage />} />
+        <Route path="/qr/wozek" element={<QrWozekHeader />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/line/:lineId" element={<LineDetailsPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }

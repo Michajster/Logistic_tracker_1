@@ -1,45 +1,42 @@
+
+// src/components/Header.tsx
 import React from "react";
-import { useScanStore } from "../store/scanStore";
+import { NavLink } from "react-router-dom";
 
 export default function Header() {
-  const mode = useScanStore((s) => s.mode);
-  const setMode = useScanStore((s) => s.setMode);
+  const linkStyle: React.CSSProperties = {
+    color: "#fff",
+    textDecoration: "none",
+    padding: "8px 12px",
+    marginRight: 8,
+    borderRadius: 6,
+  };
 
   return (
     <div
       style={{
         background: "#222",
         color: "white",
-        padding: "12px 20px",
+        padding: "10px 20px",
         display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center"
+        alignItems: "center",
+        gap: 12,
       }}
     >
-      <h2>Tracking System</h2>
-      <div>
-        <button
-          onClick={() => setMode("MAGAZYN")}
-          style={{
-            marginRight: 10,
-            background: mode === "MAGAZYN" ? "#4caf50" : "#555",
-            color: "white",
-            padding: "10px 20px"
-          }}
-        >
-          MAGAZYN
-        </button>
-        <button
-          onClick={() => setMode("LINIA")}
-          style={{
-            background: mode === "LINIA" ? "#4caf50" : "#555",
-            color: "white",
-            padding: "10px 20px"
-          }}
-        >
-          LINIA
-        </button>
-      </div>
+      <h2 style={{ margin: 0, marginRight: 12 }}>Tracking System</h2>
+      <NavLink to="/" style={({ isActive }) => ({ ...linkStyle, background: isActive ? "#4caf50" : "#444" })}>
+        Layout
+      </NavLink>
+      <NavLink
+        to="/line/A1"
+        style={({ isActive }) => ({ ...linkStyle, background: isActive ? "#4caf50" : "#444" })}
+      >
+        Linia A1
+      </NavLink>
+      
+      <NavLink to="/qr/magazyn">QR Magazyn</NavLink>
+      <NavLink to="/qr/wozek">QR Wózek</NavLink>
+
     </div>
   );
 }
