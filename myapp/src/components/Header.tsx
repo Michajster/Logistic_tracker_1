@@ -2,6 +2,7 @@
 // src/components/Header.tsx
 import React from "react";
 import { NavLink } from "react-router-dom";
+import { clearAllData } from "../services/clearAllData";
 
 export default function Header() {
   const linkStyle: React.CSSProperties = {
@@ -10,6 +11,24 @@ export default function Header() {
     padding: "8px 12px",
     marginRight: 8,
     borderRadius: 6,
+  };
+
+  const buttonStyle: React.CSSProperties = {
+    background: "#ff6b6b",
+    color: "#fff",
+    border: "none",
+    padding: "8px 12px",
+    borderRadius: 6,
+    cursor: "pointer",
+    marginLeft: "auto",
+    fontSize: 14,
+  };
+
+  const handleClear = () => {
+    if (confirm("Na pewno wyczyścić wszystkie dane?")) {
+      clearAllData();
+      window.location.reload();
+    }
   };
 
   return (
@@ -33,11 +52,13 @@ export default function Header() {
       >
         Linia A1
       </NavLink>
+      <NavLink to="/qr/magazyn" style={({ isActive }) => ({ ...linkStyle, background: isActive ? "#4caf50" : "#444" })}>
+        QR Magazyn
+      </NavLink>
       
-      <NavLink to="/qr/magazyn">QR Magazyn</NavLink>
-  <NavLink to="/qr/times">Czasy QR</NavLink>
-      <NavLink to="/qr/wozek">QR Wózek</NavLink>
-
+      <button style={buttonStyle} onClick={handleClear}>
+        Wyczyść dane
+      </button>
     </div>
   );
 }

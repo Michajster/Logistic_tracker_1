@@ -19,8 +19,9 @@ type DualQrState = {
   lastWozekScan: number | null;
   regenerateMagazyn: () => void;
   regenerateWozek: () => void;
-  setMagazynScan: (ts: number) => void; // record scanned ts and rotate displayed QR
-  setWozekScan: (ts: number) => void; // record scanned ts and rotate displayed WOZEK QR
+  setMagazynScan: (ts: number) => void; // record scanned ts (keep sessionId for WOZEK pairing)
+  setWozekScan: (ts: number) => void; // record scanned ts and start new pair
+  finalizePair: () => void; // finalize pair and create new sessionId
 };
 
 export const useDualQrStore = create<DualQrState>((set, _get) => ({
@@ -44,11 +45,12 @@ export const useDualQrStore = create<DualQrState>((set, _get) => ({
     })),
 
   setMagazynScan: (ts: number) =>
-    set(() => ({
-      // keep scanned ts for calculations, but rotate displayed QR for next use
+    set((state) => ({
+      // keep scanned ts for calculations, but keep sessionId same for WOZEK pairing
       lastMagazynScan: ts,
       current: {
-        ...makeSession(),
+        ...state.current,
+        tsMagazyn: ts,
       },
     })),
 
@@ -59,5 +61,12 @@ export const useDualQrStore = create<DualQrState>((set, _get) => ({
         ...state.current,
         tsWozek: ts,
       },
+    })),
+
+  finalizePair: () =>
+    set(() => ({
+      current: makeSession(),
+      lastMagazynScan: null,
+      lastWozekScan: null,
     })),
 }));

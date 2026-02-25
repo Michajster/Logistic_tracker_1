@@ -1,6 +1,6 @@
 
 // src/pages/HomePage.tsx
-import QrHeader from "../components/QrHeader";      // QR z timestampem sesji
+import QrWozekHeader from "../components/QrWozekHeader";
 import ScanInput from "../components/ScanInput";    // pole do skanów
 import FactoryMap from "../components/FactoryMap";  // layout SVG
 // (opcjonalnie) dev-przycisk startu QR
@@ -9,7 +9,9 @@ import FactoryMap from "../components/FactoryMap";  // layout SVG
 export default function HomePage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 56px)" }}>
-      <QrHeader />
+      <div style={{ display: "flex", gap: 24, alignItems: "center", padding: 12, borderBottom: "1px solid #eee" }}>
+        <QrWozekHeader />
+      </div>
       {/* <QuickStart /> */}
       <div style={{ padding: 20 }}>
         <ScanInput />

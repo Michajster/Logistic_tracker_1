@@ -12,7 +12,7 @@ export default function ScanInput() {
   const [value, setValue] = useState("");
 
   // DUAL QR STATE (sessionId + oba starty)
-  const { current, lastMagazynScan, lastWozekScan, setMagazynScan, setWozekScan, regenerateMagazyn, regenerateWozek } = useDualQrStore();
+  const { current, lastMagazynScan, lastWozekScan, setMagazynScan, setWozekScan, finalizePair, regenerateMagazyn, regenerateWozek } = useDualQrStore();
   const { sessionId } = current;
   const tsMagazyn = lastMagazynScan;
   const tsWozek = lastWozekScan;
@@ -27,6 +27,7 @@ export default function ScanInput() {
   // A1 — stan aktualny
   const addCurrentA1 = useCurrentA1Store((s) => s.addOrUpdateItem);
   const regenerateGlobalQr = useQrStore((s) => s.regenerate);
+  const hasPendingMagazyn = useMagazynHistoryStore((s) => s.entries.some((e) => !e.finalized));
 
   const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== "Enter") return;
@@ -37,7 +38,7 @@ export default function ScanInput() {
     if (!raw) return;
 
     // --------------------------------------------------------------------
-    // 1) QR JSON — dopasowujemy MAGAZYN lub WÓZEK
+    // 1) QR JSON — dopasowujemy MAGAZYN lub WÓZEK (zawsze akceptowane)
     // --------------------------------------------------------------------
     if (raw.startsWith("{") && raw.endsWith("}")) {
       try {
@@ -47,6 +48,8 @@ export default function ScanInput() {
           console.log("[QR#1] MAGAZYN scanned:", parsed);
           const parsedTs = typeof parsed.ts === "number" ? parsed.ts : Date.now();
           const parsedSid = parsed.sessionId ?? current.sessionId;
+
+          // Accept MAGAZYN scans (MAGAZYN-first flow): create pending entry
           setMagazynScan(parsedTs);
           // zapis do historii magazynowych skanów
           try {
@@ -54,7 +57,14 @@ export default function ScanInput() {
           } catch (err) {
             console.warn('[HISTORY] addMagazynScan failed', err);
           }
-          // odśwież wyświetlane QR magazynu i globalny header
+          // broadcast to other tabs so they can finalize or show pending
+          if (typeof BroadcastChannel !== "undefined") {
+            const bc = new BroadcastChannel("logistic-scans");
+            bc.postMessage({ type: "MAGAZYN", sessionId: parsedSid, ts: parsedTs });
+            bc.close();
+          }
+
+          // odśwież wyświetlane QR magazynu and global header
           try {
             regenerateMagazyn?.();
             regenerateGlobalQr?.();
@@ -68,12 +78,30 @@ export default function ScanInput() {
         if (parsed.type === "WOZEK") {
           console.log("[QR#2] WOZEK scanned:", parsed);
           const nowTs = Date.now();
+          
+          // Use sessionId from JSON or fallback to current sessionId
+          // (should match MAGAZYN since we don't rotate until pair is finalized)
           const parsedSid = parsed.sessionId ?? current.sessionId;
+          
           setWozekScan(nowTs);
           try {
             addWozekHistory(parsedSid, nowTs);
           } catch (err) {
             console.warn('[HISTORY] addWozekScan failed', err);
+          }
+          
+          // Finalize this pair and start a new sessionId for next MAGAZYN
+          try {
+            finalizePair?.();
+          } catch (err) {
+            console.warn('[PAIR] finalizePair failed', err);
+          }
+          
+          // broadcast WOZEK scan to other tabs
+          if (typeof BroadcastChannel !== "undefined") {
+            const bc = new BroadcastChannel("logistic-scans");
+            bc.postMessage({ type: "WOZEK", sessionId: parsedSid, ts: nowTs });
+            bc.close();
           }
           // odśwież wyświetlane QR wózka i globalny header
           try {
@@ -93,7 +121,12 @@ export default function ScanInput() {
 
     // --------------------------------------------------------------------
     // 2) SKAN KOMPONENTU NA LINII
+    // (Zablokowany jeśli czekają nieukończone wpisy magazynowe)
     // --------------------------------------------------------------------
+    if (hasPendingMagazyn) {
+      console.warn('[BLOCK] Skan komponentu blokowany — oczekuje na skan wózka');
+      return;
+    }
     const now = Date.now();
 
     let magToWozek: number | null = null;
@@ -197,8 +230,15 @@ export default function ScanInput() {
       value={value}
       onChange={(e) => setValue(e.target.value)}
       onKeyDown={handleKeyDown}
-      placeholder="Zeskanuj QR (magazyn/wózek) lub komponent linii…"
-      style={{ fontSize: 28, padding: 12, width: "100%" }}
+      placeholder={hasPendingMagazyn ? "⏳ Czekam na skan Wózka..." : "Zeskanuj QR (magazyn/wózek) lub komponent linii…"}
+      style={{
+        fontSize: 28,
+        padding: 12,
+        width: "100%",
+        background: hasPendingMagazyn ? "#fff3cd" : "#fff",
+        color: "#333",
+        borderBottom: hasPendingMagazyn ? "3px solid #ff9800" : "1px solid #ccc",
+      }}
     />
   );
 }

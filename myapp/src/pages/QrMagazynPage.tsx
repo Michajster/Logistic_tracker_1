@@ -23,7 +23,9 @@ export default function QrMagazynPage() {
     type: "MAGAZYN",
   });
 
-  const history = useMagazynHistoryStore((s) => s.entries);
+  const allEntries = useMagazynHistoryStore((s) => s.entries);
+  const finalized = allEntries.filter((e) => e.finalized);
+  const pending = allEntries.filter((e) => !e.finalized);
 
   const fmtDate = (ms: number | null) => (ms ? new Date(ms).toLocaleString() : "—");
   const [input, setInput] = useState("");
@@ -37,27 +39,21 @@ export default function QrMagazynPage() {
       try {
         const msg = ev.data;
         if (!msg || typeof msg !== "object") return;
+        const sid = msg.sessionId ?? current.sessionId;
+        const ts = msg.ts ?? Date.now();
+
         if (msg.type === "MAGAZYN") {
-          // update local store and history
-          const ts = msg.ts ?? Date.now();
-          const sid = msg.sessionId ?? current.sessionId;
-          // use stores directly
-          // Note: import inside to avoid circular issues
-          // setMagazynScan is available from useDualQrStore
-          // call through window to prevent lint issues
-          // We'll access stores by importing useDualQrStore above
-          // but to keep code simple, call via custom event below
-          // Instead, just add history and regenerate UI
-          // (ScanInput in other tab will already have updated its own store)
-          // Add history entry here too
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          const addMag = useMagazynHistoryStore.getState().addMagazynScan;
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          const setMag = useDualQrStore.getState().setMagazynScan;
-          addMag(sid, ts);
-          setMag(ts);
+          // another tab reported a MAGAZYN scan
+          useMagazynHistoryStore.getState().addMagazynScan(sid, ts);
+          useDualQrStore.getState().setMagazynScan(ts);
+          regenerateGlobalQr?.();
+        }
+
+        if (msg.type === "WOZEK") {
+          // another tab reported a WOZEK scan — add/complete wozek timestamp
+          useMagazynHistoryStore.getState().addWozekScan(sid, ts);
+          useDualQrStore.getState().setWozekScan(ts);
+          useDualQrStore.getState().finalizePair();
           regenerateGlobalQr?.();
         }
       } catch (err) {
@@ -75,12 +71,31 @@ export default function QrMagazynPage() {
       if (parsed.type === "MAGAZYN") {
         const ts = typeof parsed.ts === "number" ? parsed.ts : Date.now();
         const sid = parsed.sessionId ?? current.sessionId;
+
+        // Accept MAGAZYN input (MAGAZYN-first): create pending entry
         useMagazynHistoryStore.getState().addMagazynScan(sid, ts);
         useDualQrStore.getState().setMagazynScan(ts);
         // broadcast to other tabs
         if (typeof BroadcastChannel !== "undefined") {
           const bc = new BroadcastChannel("logistic-scans");
           bc.postMessage({ type: "MAGAZYN", sessionId: sid, ts });
+          bc.close();
+        }
+        regenerateGlobalQr?.();
+        setInput("");
+      }
+      if (parsed.type === "WOZEK") {
+        const ts = typeof parsed.ts === "number" ? parsed.ts : Date.now();
+        const sid = parsed.sessionId ?? current.sessionId;
+
+        // Accept WOZEK input: finalize the pair
+        useMagazynHistoryStore.getState().addWozekScan(sid, ts);
+        useDualQrStore.getState().setWozekScan(ts);
+        useDualQrStore.getState().finalizePair();
+        // broadcast to other tabs
+        if (typeof BroadcastChannel !== "undefined") {
+          const bc = new BroadcastChannel("logistic-scans");
+          bc.postMessage({ type: "WOZEK", sessionId: sid, ts });
           bc.close();
         }
         regenerateGlobalQr?.();
@@ -117,9 +132,9 @@ export default function QrMagazynPage() {
       </div>
 
       <section style={{ marginTop: 24, textAlign: "left" }}>
-        <h3>Historia skanów magazynu (ostatnie)</h3>
-        {history.length === 0 ? (
-          <div>Brak skanów magazynu.</div>
+        <h3>Oczekujące skany magazynu</h3>
+        {pending.length === 0 ? (
+          <div>Brak oczekujących skanów.</div>
         ) : (
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
@@ -132,13 +147,43 @@ export default function QrMagazynPage() {
               </tr>
             </thead>
             <tbody>
-              {history.map((h) => (
+              {pending.map((h) => (
+                <tr key={h.id} style={{ borderBottom: "1px solid #f1f1f1", background: "#fff7e6" }}>
+                  <td style={{ padding: 6 }}>{h.sessionId}</td>
+                  <td style={{ padding: 6 }}>{h.step}</td>
+                  <td style={{ padding: 6 }}>{fmtDate(h.tsMagazyn)}</td>
+                  <td style={{ padding: 6 }}>{fmtDate(h.tsWozek)}</td>
+                  <td style={{ padding: 6 }}>{new Date(h.createdAt).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        <h3 style={{ marginTop: 18 }}>Historia skanów magazynu (sfinalizowane)</h3>
+        {finalized.length === 0 ? (
+          <div>Brak sfinalizowanych skanów magazynu.</div>
+        ) : (
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}>
+                <th style={{ padding: 6 }}>Session</th>
+                <th style={{ padding: 6 }}>Krok</th>
+                <th style={{ padding: 6 }}>Magazyn (ts)</th>
+                <th style={{ padding: 6 }}>Wózek (ts)</th>
+                <th style={{ padding: 6 }}>Magazyn → Wózek</th>
+                <th style={{ padding: 6 }}>Dodano</th>
+              </tr>
+            </thead>
+            <tbody>
+              {finalized.map((h) => (
                 <tr key={h.id} style={{ borderBottom: "1px solid #f1f1f1" }}>
-                    <td style={{ padding: 6 }}>{h.sessionId}</td>
-                    <td style={{ padding: 6 }}>{h.step}</td>
-                    <td style={{ padding: 6 }}>{fmtDate(h.tsMagazyn)}</td>
-                    <td style={{ padding: 6 }}>{fmtDate(h.tsWozek)}</td>
-                    <td style={{ padding: 6 }}>{new Date(h.createdAt).toLocaleString()}</td>
+                  <td style={{ padding: 6 }}>{h.sessionId}</td>
+                  <td style={{ padding: 6 }}>{h.step}</td>
+                  <td style={{ padding: 6 }}>{fmtDate(h.tsMagazyn)}</td>
+                  <td style={{ padding: 6 }}>{fmtDate(h.tsWozek)}</td>
+                  <td style={{ padding: 6 }}>{h.magToWozek != null ? (h.magToWozek / 1000).toFixed(1) + 's' : '—'}</td>
+                  <td style={{ padding: 6 }}>{new Date(h.completedAt ?? h.createdAt).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
