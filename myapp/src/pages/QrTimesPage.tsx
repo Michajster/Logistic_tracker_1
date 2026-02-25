@@ -1,4 +1,3 @@
-import React from "react";
 import { useDualQrStore } from "../store/qrDualStore";
 import { useDeliveryStore } from "../store/deliveryStore";
 

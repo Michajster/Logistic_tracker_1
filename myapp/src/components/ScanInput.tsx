@@ -10,7 +10,7 @@ export default function ScanInput() {
   const [value, setValue] = useState("");
 
   // DUAL QR STATE (sessionId + oba starty)
-  const { current, lastMagazynScan, lastWozekScan, setMagazynScan, setWozekScan } = useDualQrStore();
+  const { current, lastMagazynScan, lastWozekScan, setMagazynScan, setWozekScan, regenerateMagazyn, regenerateWozek } = useDualQrStore();
   const { sessionId } = current;
   const tsMagazyn = lastMagazynScan;
   const tsWozek = lastWozekScan;
@@ -135,6 +135,14 @@ export default function ScanInput() {
     } catch (err) {
       console.error("[REST] failed", err);
       await saveOffline(evt);
+    }
+
+    // Po każdym poprawnym skanie komponentu odświeżamy wyświetlane kody
+    try {
+      regenerateMagazyn?.();
+      regenerateWozek?.();
+    } catch (err) {
+      console.warn('[QR] regenerate failed', err);
     }
 
     setValue("");
