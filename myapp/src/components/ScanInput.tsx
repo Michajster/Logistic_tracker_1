@@ -3,6 +3,7 @@ import { sendScanEvent } from "../services/api";
 import { saveOffline } from "../services/offlineQueue";
 
 import { useDualQrStore } from "../store/qrDualStore";           // QR #1 (Magazyn) + QR #2 (Wózek)
+import { useQrStore } from "../store/qrStore";                  // globalny QR header
 import { useDeliveryStore } from "../store/deliveryStore";       // historia
 import { useCurrentA1Store } from "../store/currentA1Store";     // aktualne części na A1
 
@@ -21,6 +22,7 @@ export default function ScanInput() {
 
   // A1 — stan aktualny
   const addCurrentA1 = useCurrentA1Store((s) => s.addOrUpdateItem);
+  const regenerateGlobalQr = useQrStore((s) => s.regenerate);
 
   const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== "Enter") return;
@@ -141,6 +143,7 @@ export default function ScanInput() {
     try {
       regenerateMagazyn?.();
       regenerateWozek?.();
+      regenerateGlobalQr?.();
     } catch (err) {
       console.warn('[QR] regenerate failed', err);
     }
