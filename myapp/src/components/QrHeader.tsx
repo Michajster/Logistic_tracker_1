@@ -1,18 +1,11 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { useQrStore } from "../store/qrStore";
 
 export default function QrHeader() {
-  // Timestamp generowany przy załadowaniu strony
-  const timestamp = useMemo(() => Date.now(), []);
+  const current = useQrStore((s) => s.current);   // { ts, sid }
 
-  // Opcjonalnie: można dorzucić unikalne ID sesji
-  const sessionId = useMemo(() => crypto.randomUUID(), []);
-
-  // Dane zakodowane w QR
-  const qrPayload = JSON.stringify({
-    ts: timestamp,
-    sid: sessionId,
-  });
+  const qrPayload = JSON.stringify(current);
 
   return (
     <div style={{
@@ -20,12 +13,14 @@ export default function QrHeader() {
       flexDirection: "column",
       alignItems: "center",
       padding: 20,
-      borderBottom: "1px solid #ccc"
+      borderBottom: "1px solid #ccc",
+      background: "#fafafa"
     }}>
       <h2>QR — znacznik czasu sesji</h2>
       <QRCodeSVG value={qrPayload} size={180} />
       <p style={{ marginTop: 10 }}>
-        Timestamp: <b>{timestamp}</b>
+        Timestamp: <b>{current.ts}</b><br />
+        Session: <code>{current.sid}</code>
       </p>
     </div>
   );

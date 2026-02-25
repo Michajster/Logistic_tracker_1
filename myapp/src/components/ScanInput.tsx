@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { sendScanEvent } from "../services/api";
 import { saveOffline } from "../services/offlineQueue";
+import { useQrStore } from "../store/qrStore";
 
 // QR timestamp store (start)
 import { useScanStore } from "../store/scanStore";
@@ -14,6 +15,7 @@ import { useCurrentA1Store } from "../store/currentA1Store";
 export default function ScanInput() {
   const [value, setValue] = useState("");
 
+  const regenerateQr = useQrStore((s) => s.regenerate);
   // AKTUALNY STAN A1 (itemy na linii)
   const addCurrentA1 = useCurrentA1Store((s) => s.addOrUpdateItem);
 
@@ -36,23 +38,26 @@ export default function ScanInput() {
 
     if (!raw) return;
 
-    // --------------------------------------------
-    // 1) QR Z MAGAZYNU (JSON z "ts")
-    // --------------------------------------------
-    if (raw.startsWith("{") && raw.endsWith("}")) {
-      try {
-        const parsed = JSON.parse(raw);
+    // 1) MAGAZYN → QR: JSON {"ts":..., "sid":...}
+if (raw.startsWith("{") && raw.endsWith("}")) {
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed.ts === "number") {
+      // Save the QR 'start' timestamp for travel-time math
+      setLastQrTs(parsed.ts);
+      console.log("[QR] start timestamp set =", parsed.ts);
 
-        if (typeof parsed.ts === "number") {
-          setLastQrTs(parsed.ts);
-          console.log("[QR] zapisano timestamp startu =", parsed.ts);
-          setValue("");
-          return; // QR nie generuje skanu komponentu
-        }
-      } catch (err) {
-        console.warn("[QR] Błędny JSON:", err);
-      }
+      // Immediately rotate the QR so the next 'start' uses a fresh code
+      regenerateQr();
+      console.log("[QR] regenerated for next run");
+
+      setValue("");
+      return; // QR is not a component scan
     }
+  } catch (err) {
+    console.warn("[QR] Invalid JSON:", err);
+  }
+}
 
     // --------------------------------------------
     // 2) SKAN KOMPONENTU NA LINII
