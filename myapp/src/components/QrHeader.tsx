@@ -1,5 +1,5 @@
 // src/components/QrHeader.tsx
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { useQrStore } from "../store/qrStore";
 

@@ -1,9 +1,9 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { useDualQrStore } from "../store/qrDualStore";
 
 export default function QrWozekHeader() {
-  const { current, setWozekScan, regenerateWozek } = useDualQrStore();
+  const { current, regenerateWozek } = useDualQrStore();
 
   // auto refresh co 60s
   useEffect(() => {

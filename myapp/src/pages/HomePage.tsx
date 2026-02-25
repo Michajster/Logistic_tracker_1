@@ -1,6 +1,5 @@
 
 // src/pages/HomePage.tsx
-import React from "react";
 import QrHeader from "../components/QrHeader";      // QR z timestampem sesji
 import ScanInput from "../components/ScanInput";    // pole do skanów
 import FactoryMap from "../components/FactoryMap";  // layout SVG

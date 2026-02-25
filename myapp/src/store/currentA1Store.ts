@@ -14,7 +14,7 @@ type CurrentA1State = {
   clear: () => void;
 };
 
-export const useCurrentA1Store = create<CurrentA1State>((set, get) => ({
+export const useCurrentA1Store = create<CurrentA1State>((set, _get) => ({
   items: [],
 
   addOrUpdateItem: ({ partCode, arrivalTs, travelMs }) =>

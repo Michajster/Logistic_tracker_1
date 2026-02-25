@@ -20,7 +20,7 @@ type DualQrState = {
   setWozekScan: (ts: number) => void;
 };
 
-export const useDualQrStore = create<DualQrState>((set, get) => ({
+export const useDualQrStore = create<DualQrState>((set, _get) => ({
   current: makeSession(),
 
   regenerateMagazyn: () =>

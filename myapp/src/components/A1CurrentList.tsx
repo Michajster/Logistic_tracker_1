@@ -1,4 +1,4 @@
-import React from "react";
+import type { CSSProperties } from "react";
 import { useCurrentA1Store } from "../store/currentA1Store";
 
 function formatMs(ms: number) {
@@ -39,5 +39,5 @@ export default function A1CurrentList() {
   );
 }
 
-const th = { textAlign: "left", padding: "8px 10px", borderBottom: "1px solid #ccc" };
-const td = { padding: "8px 10px", borderBottom: "1px solid #eee" };
+const th: CSSProperties = { textAlign: "left", padding: "8px 10px", borderBottom: "1px solid #ccc" };
+const td: CSSProperties = { padding: "8px 10px", borderBottom: "1px solid #eee" };

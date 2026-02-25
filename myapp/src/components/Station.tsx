@@ -1,6 +1,5 @@
 
 // src/components/Station.tsx
-import React from "react";
 import { useInventoryStore } from "../store/inventoryStore";
 import { useNavigate } from "react-router-dom";
 

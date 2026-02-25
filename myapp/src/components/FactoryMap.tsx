@@ -1,4 +1,3 @@
-import React from "react";
 import Station from "./Station";
 // Jeśli chcesz użyć gotowego pliku SVG jako komponentu: import LayoutSvg from "../assets/layout.svg?react";
 

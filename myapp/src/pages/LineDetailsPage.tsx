@@ -1,6 +1,5 @@
 
 // src/pages/LineDetailsPage.tsx
-import React from "react";
 import { useParams, Link } from "react-router-dom";
 import A1CurrentList from "../components/A1CurrentList";
 import A1ListAndTimes from "../components/A1ListAndTimes";

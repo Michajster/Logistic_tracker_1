@@ -94,11 +94,7 @@ export default function ScanInput() {
         partCode: raw,
         startTs: tsMagazyn,
         endTs: now,
-        travelMs: magToLine,
-        sessionId,
-        magToWozek,
-        wozekToLine,
-        magToLine,
+        travelMs: magToLine ?? 0,
       });
 
       // STAN AKTUALNY
