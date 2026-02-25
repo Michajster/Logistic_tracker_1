@@ -17,6 +17,7 @@ export default function App() {
         
         <Route path="/qr/magazyn" element={<QrMagazynPage />} />
         <Route path="/qr/wozek" element={<QrWozekHeader />} />
+        
         <Route path="/" element={<HomePage />} />
         <Route path="/line/:lineId" element={<LineDetailsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
