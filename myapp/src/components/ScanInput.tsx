@@ -6,6 +6,7 @@ import { useDualQrStore } from "../store/qrDualStore";           // QR #1 (Magaz
 import { useQrStore } from "../store/qrStore";                  // globalny QR header
 import { useDeliveryStore } from "../store/deliveryStore";       // historia
 import { useCurrentA1Store } from "../store/currentA1Store";     // aktualne części na A1
+import { useMagazynHistoryStore } from "../store/magazynHistoryStore";
 
 export default function ScanInput() {
   const [value, setValue] = useState("");
@@ -15,6 +16,9 @@ export default function ScanInput() {
   const { sessionId } = current;
   const tsMagazyn = lastMagazynScan;
   const tsWozek = lastWozekScan;
+
+  const addMagazynHistory = useMagazynHistoryStore((s) => s.addMagazynScan);
+  const addWozekHistory = useMagazynHistoryStore((s) => s.addWozekScan);
 
   // A1 — lista części
   const isA1Part     = useDeliveryStore((s) => s.isA1Part);
@@ -41,7 +45,15 @@ export default function ScanInput() {
 
         if (parsed.type === "MAGAZYN") {
           console.log("[QR#1] MAGAZYN scanned:", parsed);
-          setMagazynScan(parsed.ts);
+          const parsedTs = typeof parsed.ts === "number" ? parsed.ts : Date.now();
+          const parsedSid = parsed.sessionId ?? current.sessionId;
+          setMagazynScan(parsedTs);
+          // zapis do historii magazynowych skanów
+          try {
+            addMagazynHistory(parsedSid, parsedTs);
+          } catch (err) {
+            console.warn('[HISTORY] addMagazynScan failed', err);
+          }
           // odśwież wyświetlane QR magazynu i globalny header
           try {
             regenerateMagazyn?.();
@@ -55,7 +67,14 @@ export default function ScanInput() {
 
         if (parsed.type === "WOZEK") {
           console.log("[QR#2] WOZEK scanned:", parsed);
-          setWozekScan(Date.now());
+          const nowTs = Date.now();
+          const parsedSid = parsed.sessionId ?? current.sessionId;
+          setWozekScan(nowTs);
+          try {
+            addWozekHistory(parsedSid, nowTs);
+          } catch (err) {
+            console.warn('[HISTORY] addWozekScan failed', err);
+          }
           // odśwież wyświetlane QR wózka i globalny header
           try {
             regenerateWozek?.();
