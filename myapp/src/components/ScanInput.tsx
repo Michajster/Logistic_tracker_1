@@ -129,24 +129,34 @@ export default function ScanInput() {
     }
     const now = Date.now();
 
+    // Pobierz ostatnią sfinalizowaną parę z magazynHistoryStore
+    const entries = useMagazynHistoryStore.getState().entries;
+    const lastFinalized = entries.find((e) => e.finalized);
+    
     let magToWozek: number | null = null;
     let wozekToLine: number | null = null;
     let magToLine: number | null = null;
 
-    // MAGAZYN -> WÓZEK
-    if (tsMagazyn !== null) {
-      const end = tsWozek ?? now;
-      magToWozek = end - tsMagazyn;
-    }
-
-    // WÓZEK -> LINIA
-    if (tsWozek !== null) {
-      wozekToLine = now - tsWozek;
-    }
-
-    // MAGAZYN -> LINIA (suma)
-    if (tsMagazyn !== null) {
-      magToLine = now - tsMagazyn;
+    if (lastFinalized && lastFinalized.tsWozek) {
+      // Użyj danych z ostatniej sfinalizowanej pary
+      magToWozek = lastFinalized.magToWozek ?? null;
+      
+      // WÓZEK -> LINIA (od czasu skanowania wózka w sfinalizowanej parze)
+      wozekToLine = now - lastFinalized.tsWozek;
+      
+      // MAGAZYN -> LINIA (od czasu magazynu w sfinalizowanej parze)
+      if (lastFinalized.tsMagazyn) {
+        magToLine = now - lastFinalized.tsMagazyn;
+      }
+      
+      console.log("[TIMES from finalized]", {
+        magToWozek,
+        wozekToLine,
+        magToLine,
+        lastFinalizedSessionId: lastFinalized.sessionId
+      });
+    } else {
+      console.warn('[TIMES] Brak sfinalizowanej pary magazyn-wózek');
     }
 
     console.log("[TIMES]", {
