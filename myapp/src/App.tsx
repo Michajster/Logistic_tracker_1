@@ -5,6 +5,7 @@ import Header from "./components/Header";
 import { useLayoutLive } from "./hooks/useLayoutLive";
 import QrHeader from "./components/QrHeader";
 import A1ListAndTimes from "./components/A1ListAndTimes";
+import A1CurrentList from "./components/A1CurrentList";
 
 export default function App() {
   useLayoutLive();
@@ -14,6 +15,8 @@ export default function App() {
       <Header />
 
       <QrHeader />
+
+       <A1CurrentList />
 
       <A1ListAndTimes />
 

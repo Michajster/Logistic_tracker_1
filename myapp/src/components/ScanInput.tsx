@@ -5,9 +5,12 @@ import { saveOffline } from "../services/offlineQueue";
 import { useScanStore } from "../store/scanStore";
 import { useDeliveryStore } from "../store/deliveryStore"; // tabela dla A1
 import { useDeliveryStore as useA1 } from "../store/deliveryStore";
+import { useCurrentA1Store } from "../store/currentA1Store";
 
 export default function ScanInput() {
   const [value, setValue] = useState("");
+
+  const addCurrentA1 = useCurrentA1Store((s) => s.addOrUpdateItem);
 
   const lastQrTs = useScanStore((s) => s.lastQrTs);
   const setLastQrTs = useScanStore((s) => s.setLastQrTs);
@@ -56,14 +59,23 @@ export default function ScanInput() {
 
     // jeśli komponent należy do linii A1 → dopisujemy do tabeli
     if (isA1Part(raw) && typeof lastQrTs === "number") {
-      addDelivery({
-        partCode: raw,
-        startTs: lastQrTs,
-        endTs: now,
-        travelMs,
-      });
-      console.log("[A1] Dopisano pomiar komponentu:", raw);
-    }
+  // 1) wpis do historii pomiarów A1
+  addDelivery({
+    partCode: raw,
+    startTs: lastQrTs,
+    endTs: now,
+    travelMs,
+  });
+
+  // 2) wpis do AKTUALNEGO stanu A1
+  addCurrentA1({
+    partCode: raw,
+    arrivalTs: now,
+    travelMs,
+  });
+
+  console.log(`[A1] Zaktualizowano stan bieżący + pomiar: ${raw}`);
+}
 
     // -----------------------------------------------------------
     // 3) Wyślij event do backendu
