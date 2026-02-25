@@ -9,13 +9,20 @@ export type DeliveryRow = {
   startTs: number; // timestamp z QR (ms)
   endTs: number;   // timestamp skanu na linii (ms)
   travelMs: number;
+  magToWozek?: number | null;
+  wozekToLine?: number | null;
 };
+
+import type { ProcessStep } from "./processStep";
+import { STEP_LINIA } from "./processStep";
+
+export type DeliveryRowWithStep = DeliveryRow & { step: ProcessStep };
 
 type DeliveryState = {
   lineA1Parts: string[];
   deliveries: DeliveryRow[];
   isA1Part: (code: string) => boolean;
-  addDelivery: (row: Omit<DeliveryRow, "id" | "lineId">) => void;
+  addDelivery: (row: Omit<DeliveryRow, "id" | "lineId"> & { step?: ProcessStep }) => void;
   clear: () => void;
 };
 
@@ -27,7 +34,7 @@ export const useDeliveryStore = create<DeliveryState>((set, get) => ({
     return lineA1Parts.includes(code);
   },
  
-addDelivery: ({ partCode, startTs, endTs, travelMs }) =>
+addDelivery: ({ partCode, startTs, endTs, travelMs, magToWozek, wozekToLine, step }) =>
   set((s) => ({
     deliveries: [
       {
@@ -37,7 +44,10 @@ addDelivery: ({ partCode, startTs, endTs, travelMs }) =>
         startTs,
         endTs,
         travelMs,
-      } as DeliveryRow,   // ← KLUCZOWE
+        magToWozek: magToWozek ?? null,
+        wozekToLine: wozekToLine ?? null,
+        step: step ?? STEP_LINIA,
+      } as unknown as DeliveryRowWithStep,
       ...s.deliveries,
     ].slice(0, 100),
   })),

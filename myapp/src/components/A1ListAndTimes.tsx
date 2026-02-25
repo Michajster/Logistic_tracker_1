@@ -54,6 +54,9 @@ export default function A1ListAndTimes() {
                 <tr style={{ background: "#eee" }}>
                   <th style={th}>Linia</th>
                   <th style={th}>Część</th>
+                  <th style={th}>Magazyn → Wózek</th>
+                  <th style={th}>Wózek → Linia</th>
+                  <th style={th}>Magazyn → Linia</th>
                   <th style={th}>Start (QR)</th>
                   <th style={th}>Koniec (Skan)</th>
                   <th style={th}>Czas</th>
@@ -69,6 +72,9 @@ export default function A1ListAndTimes() {
                     <tr key={d.id}>
                       <td style={td}>A1</td>
                       <td style={td}><code>{d.partCode}</code></td>
+                      <td style={tdSmall}>{d.magToWozek != null ? formatMs(d.magToWozek) : "—"}</td>
+                      <td style={tdSmall}>{d.wozekToLine != null ? formatMs(d.wozekToLine) : "—"}</td>
+                      <td style={tdSmall}>{d.travelMs != null ? formatMs(d.travelMs) : "—"}</td>
                       <td style={tdSmall}>{new Date(d.startTs).toLocaleTimeString()}</td>
                       <td style={tdSmall}>{new Date(d.endTs).toLocaleTimeString()}</td>
                       <td style={tdBold}>{formatMs(d.travelMs)}</td>

@@ -41,15 +41,17 @@ export default function QrTimesPage() {
                 <th style={{ padding: 6 }}>Część</th>
                 <th style={{ padding: 6 }}>Magazyn (ts)</th>
                 <th style={{ padding: 6 }}>Linia (ts)</th>
+                <th style={{ padding: 6 }}>Krok</th>
                 <th style={{ padding: 6 }}>Magazyn → Linia</th>
               </tr>
             </thead>
             <tbody>
-              {deliveries.map((d) => (
+              {deliveries.map((d: any) => (
                 <tr key={d.id} style={{ borderBottom: "1px solid #f1f1f1" }}>
                   <td style={{ padding: 6 }}>{d.partCode}</td>
                   <td style={{ padding: 6 }}>{fmtDate(d.startTs)}</td>
                   <td style={{ padding: 6 }}>{fmtDate(d.endTs)}</td>
+                  <td style={{ padding: 6 }}>{d.step ?? "—"}</td>
                   <td style={{ padding: 6 }}>{fmtMs(d.travelMs)}</td>
                 </tr>
               ))}

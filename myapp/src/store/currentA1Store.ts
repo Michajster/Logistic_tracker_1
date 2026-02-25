@@ -5,6 +5,7 @@ export type A1CurrentItem = {
   partCode: string;
   arrivalTs: number;   // kiedy część dotarła na A1
   travelMs: number;    // czas przejazdu QR → linia
+  lastStep?: string;
 };
 
 type CurrentA1State = {
@@ -17,7 +18,7 @@ type CurrentA1State = {
 export const useCurrentA1Store = create<CurrentA1State>((set, _get) => ({
   items: [],
 
-  addOrUpdateItem: ({ partCode, arrivalTs, travelMs }) =>
+  addOrUpdateItem: ({ partCode, arrivalTs, travelMs, lastStep }: any) =>
     set((state) => {
       const others = state.items.filter(
         (x) => x.partCode.toUpperCase() !== partCode.toUpperCase()
@@ -30,6 +31,7 @@ export const useCurrentA1Store = create<CurrentA1State>((set, _get) => ({
             partCode,
             arrivalTs,
             travelMs,
+            lastStep,
           },
           ...others,
         ],

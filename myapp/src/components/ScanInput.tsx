@@ -132,6 +132,9 @@ export default function ScanInput() {
         startTs: tsMagazyn ?? now,
         endTs: now,
         travelMs: magToLine ?? 0,
+        magToWozek: magToWozek,
+        wozekToLine: wozekToLine,
+        step: "LINIA",
       });
 
       // STAN AKTUALNY
@@ -139,6 +142,7 @@ export default function ScanInput() {
         partCode: raw,
         arrivalTs: now,
         travelMs: magToLine ?? 0,
+        lastStep: "LINIA",
       });
 
       console.log(`[A1] Updated: ${raw}`, {
